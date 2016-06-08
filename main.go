@@ -2,50 +2,58 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
 )
 
-var scriptTpl = `
-(function() {
-	var i = 0;
-	function incr() {
-		$("#%s-response #ticktock").html('' + i++);
-	}
+const pageTpl = `
+<div id="{{ .sr.Namespace }}-response">
+	<h1>Your portal is running {{ .sr.Portal.Provider }} major version {{ .sr.Portal.Version.Major }}.</h1>
+	<h2>Full Details:</h2>
+	<pre>{{ .srJson }}</pre>
 
-	setInterval(incr, 1000);
-})(up.jQuery);
+	<h2>JavaScript example</h2>
+	<div id="ticktock"></div>
+
+	<script type="text/javascript">
+		(function() {
+			var i = 0;
+			function incr() {
+				$("#{{ .sr.Namespace }}-response #ticktock").html('' + i++);
+			}
+
+			setInterval(incr, 1000);
+		})(up.jQuery);
+	</script>
+</div>
 `
 
-func script(sr soffit.SoffitRequest) string {
-	return fmt.Sprintf(scriptTpl, sr.Namespace)
-}
-
 func main() {
+	t := template.Must(template.New("soffit").Parse(pageTpl))
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var sr soffit.SoffitRequest
+		var sr soffit.Request
 
 		err := json.NewDecoder(r.Body).Decode(&sr)
 		if err != nil {
 			log.Println("Error decoding JSON", err)
 		}
 
-		fmt.Fprintf(w, `<div id="%s-response">`, sr.Namespace)
-		fmt.Fprintf(w, "<h1>Your portal is running %s major version %d</h1>", sr.Portal.Provider, sr.Portal.Version.Major)
-		if bs, err := json.MarshalIndent(sr, "", "  "); err == nil {
-			os.Stdout.Write(bs)
-			fmt.Fprintf(w, "<h2>Full details:</h2>\n<pre>%s</pre>", bs)
+		bs, _ := json.MarshalIndent(sr, "", "  ")
+
+		err = t.Execute(w, map[string]interface{}{
+			"srJson": string(bs),
+			"sr":     sr,
+		})
+
+		if err != nil {
+			log.Println("Error executing template: %v", err)
 		}
-		fmt.Fprintf(w, `<script type="text/javascript">%s</script>`, script(sr))
-		fmt.Fprintf(w, `<h2>Javascript example</h2>`)
-		fmt.Fprintf(w, `<div id="ticktock"></div>`)
-		fmt.Fprintf(w, `</div>`)
 	})
 
 	log.Fatal(http.ListenAndServe(":8089", nil))

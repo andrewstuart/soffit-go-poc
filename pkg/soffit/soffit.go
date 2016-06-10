@@ -20,5 +20,5 @@ type PortalInfo struct {
 
 // UserDetails is the representation of the user information sent by uPortal.
 type UserDetails struct {
-	UserName string `json:"userName"`
+	Username string `json:"username"`
 }

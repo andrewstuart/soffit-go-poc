@@ -50,7 +50,7 @@ func getJWT(req soffit.Request, secret string) (string, error) {
 	t.Claims = map[string]interface{}{
 		"iss": jIss,
 		"aud": jAud,
-		"sub": req.UserDetails.UserName,
+		"sub": req.UserDetails.Username,
 		"org.apereo.portal.soffitRequest": req,
 		"secret": secret,
 	}

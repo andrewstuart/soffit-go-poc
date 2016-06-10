@@ -37,6 +37,8 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
+		log.Println("Handling request")
+
 		var sr soffit.Request
 
 		err := json.NewDecoder(r.Body).Decode(&sr)

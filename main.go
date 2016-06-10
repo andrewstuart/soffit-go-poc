@@ -123,7 +123,7 @@ func main() {
 		}
 
 		reqJWT, err := jwt.Parse(au[1], func(t *jwt.Token) (interface{}, error) {
-			return signingKey, nil
+			return &signingKey.PublicKey, nil
 		})
 
 		if err != nil {

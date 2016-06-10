@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: soffit-go
+  namespace: uportal
 spec:
   replicas: 1
   template:
@@ -18,15 +19,28 @@ spec:
           requests:
             cpu: 100m
             memory: 100Mi
+        volumeMounts:
+        - name: conf
+          mountPath: /soffit/conf
+        env:
+        - name: CONF_FILE
+          value: /soffit/conf/soffit.yaml
+        - name: ENDPOINT
+          value: https://soffit-go.test.astuart.co
         ports:
         - containerPort: 8089
           protocol: TCP
           name: web
+      volumes:
+      - name: conf
+        secret:
+          secretName: soffit-go-conf
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: soffit-go
+  namespace: uportal
 spec:
   ports:
   - port: 80
@@ -35,3 +49,22 @@ spec:
     app: uportal-go
     type: soffit
     tier: backend
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: soffit-go
+  namespace: uportal
+spec:
+  tls:
+  - secretName: soffit-go.test.astuart.co.tls
+    hosts:
+    - soffit-go.test.astuart.co
+  rules:
+  - host: soffit-go.test.astuart.co
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: soffit-go
+          servicePort: 80

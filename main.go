@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
+	"github.com/ghodss/yaml"
 )
+
+var conf map[string]string
 
 const pageTpl = `
 <div id="{{ .sr.Namespace }}-response">
@@ -18,14 +23,23 @@ const pageTpl = `
 	<h2>JavaScript example</h2>
 	<div id="ticktock"></div>
 
+	<h2>Remote Data Example</h2>
+	<div id="remote-data"></div>
+
 	<script type="text/javascript">
 		(function() {
 			var i = 0;
+			var ele = $('#{{ .sr.Namespace }}-response');
 			function incr() {
-				$("#{{ .sr.Namespace }}-response #ticktock").html('' + i++);
+				 ele.find('#ticktock').html('' + i++);
 			}
 
 			setInterval(incr, 1000);
+
+			$.get('{{ .conf.endpoint }}/data')
+				.success(function(d) {
+					ele.find('#remote-data').append('<pre>' + d + '</pre>');
+				});
 		})(up.jQuery);
 	</script>
 </div>
@@ -34,7 +48,9 @@ const pageTpl = `
 func main() {
 	t := template.Must(template.New("soffit").Parse(pageTpl))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r := http.NewServeMux()
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		log.Println("Handling request")
@@ -51,6 +67,7 @@ func main() {
 		err = t.Execute(w, map[string]interface{}{
 			"srJson": string(bs),
 			"sr":     sr,
+			"conf":   conf,
 		})
 
 		if err != nil {
@@ -58,5 +75,26 @@ func main() {
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(":8089", nil))
+	r.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"hello": "world",
+		})
+	})
+
+	log.Fatal(http.ListenAndServe(":8089", r))
+}
+
+func init() {
+	bs, err := ioutil.ReadFile(os.Getenv("CONF_FILE"))
+	if err != nil {
+		log.Fatal("Could not read CONF_FILE", err)
+	}
+	err = yaml.Unmarshal(bs, &conf)
+	if err != nil {
+		log.Fatal("Could not unmarshal yaml config", err)
+	}
+
+	conf["endpoint"] = os.Getenv("ENDPOINT")
 }

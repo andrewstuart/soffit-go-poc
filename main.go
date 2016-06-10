@@ -103,9 +103,14 @@ func main() {
 	})
 
 	r.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Handling %s request at /data\n", r.Method)
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+
 		if r.Method == http.MethodOptions {
+			defer log.Println("finished options")
+
+			w.Write(nil)
 			return
 		}
 

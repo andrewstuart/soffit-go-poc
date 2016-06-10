@@ -17,7 +17,7 @@ var (
 )
 
 func getJWT(req soffit.Request, secret string) (string, error) {
-	t := jwt.New(jwt.SigningMethodHS384)
+	t := jwt.New(jwt.SigningMethodHS256)
 
 	t.Header["kid"] = kid
 

@@ -1,13 +1,18 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var conf map[string]string
@@ -34,8 +39,15 @@ const pageTpl = `
 
 			setInterval(incr, 1000);
 
-			$.get('{{ .conf.endpoint }}/data')
-				.success(function(d) {
+			var jwt = "{{ .jwt }}"
+
+			$.ajax({
+				method: 'GET',
+				url: '{{ .conf.endpoint }}/data',
+				headers: {
+					Authorization: "JWT " + jwt}
+				})
+				.then(function(d) {
 					ele.find('#remote-data').append('<pre>' + d + '</pre>');
 				});
 		})(up.jQuery);
@@ -48,6 +60,8 @@ func main() {
 
 	r := http.NewServeMux()
 
+	secrets := map[string]string{}
+
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -55,33 +69,79 @@ func main() {
 
 		var sr soffit.Request
 
-		err := json.NewDecoder(r.Body).Decode(&sr)
+		err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&sr)
 		if err != nil {
 			log.Println("Error decoding JSON", err)
+			http.Error(w, "Error decoding JSON", http.StatusNotAcceptable)
+			return
 		}
 
 		bs, _ := json.MarshalIndent(sr, "", "  ")
+
+		sec := newSecret()
+		secrets[sr.UserName] = sec
+
+		jwt, err := getJWT(sr, sec)
+
+		if err != nil {
+			log.Println("Error signing jwt", err)
+			http.Error(w, "jwt signing error", 500)
+			return
+		}
 
 		err = t.Execute(w, map[string]interface{}{
 			"srJson": string(bs),
 			"sr":     sr,
 			"conf":   conf,
+			"jwt":    jwt,
+			"secret": sec,
 		})
 
 		if err != nil {
-			log.Println("Error executing template: %v", err)
+			log.Printf("Error executing template: %v\n", err)
 		}
 	})
 
 	r.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		au := strings.Split(r.Header.Get("Authorization"), " ")
+
+		if len(au) < 2 || au[0] != "JWT" {
+			log.Println("Only JWT Authorization is acceptable")
+			http.Error(w, "Only JWT Authorization is acceptable", 401)
+			return
+		}
+
+		reqJWT, err := jwt.Parse(au[1], func(t *jwt.Token) (interface{}, error) {
+			return signingKey, nil
+		})
+
+		if err != nil {
+			log.Println("Error parsing jwt", err)
+			http.Error(w, "Invalid JWT", 403)
+			return
+		}
 
 		json.NewEncoder(w).Encode(map[string]string{
-			"hello": "world",
+			"hello":        "world",
+			"jwtSecret":    reqJWT.Claims["secret"].(string),
+			"storedSecret": secrets[reqJWT.Claims["sub"].(string)],
 		})
 	})
 
 	log.Fatal(http.ListenAndServe(":8089", r))
+}
+
+func newSecret() string {
+	bs := make([]byte, 20)
+	rand.Read(bs)
+
+	return base64.StdEncoding.EncodeToString(bs)
 }
 
 func init() {

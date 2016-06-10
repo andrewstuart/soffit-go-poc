@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: soffit-go
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: uportal-go
+        type: soffit
+        tier: backend
+    spec:
+      containers:
+      - name: soffit-go
+        image: docker.astuart.co:5000/soffit/soffit-go
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 8089
+          protocol: TCP
+          name: web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soffit-go
+spec:
+  ports:
+  - port: 80
+    targetPort: 8089
+  selector:
+    app: uportal-go
+    type: soffit
+    tier: backend

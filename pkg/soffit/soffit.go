@@ -9,6 +9,7 @@ type Request struct {
 	WindowState string              `json:"windowState"`
 	Portal      PortalInfo          `json:"portal"`
 	Preferences map[string][]string `json:"preferences"`
+	UserName    string              `json:"userName"`
 }
 
 // PortalInfo is the representation of the portal information sent by the uPortal server.

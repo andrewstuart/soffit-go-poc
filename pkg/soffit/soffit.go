@@ -9,11 +9,16 @@ type Request struct {
 	WindowState string              `json:"windowState"`
 	Portal      PortalInfo          `json:"portal"`
 	Preferences map[string][]string `json:"preferences"`
-	UserName    string              `json:"userName"`
+	UserDetails UserDetails         `json:"userDetails"`
 }
 
 // PortalInfo is the representation of the portal information sent by the uPortal server.
 type PortalInfo struct {
 	Provider string         `json:"provider"`
 	Version  semver.Version `json:"version"`
+}
+
+// UserDetails is the representation of the user information sent by uPortal.
+type UserDetails struct {
+	UserName string `json:"userName"`
 }

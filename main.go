@@ -79,7 +79,7 @@ func main() {
 		bs, _ := json.MarshalIndent(sr, "", "  ")
 
 		sec := newSecret()
-		secrets[sr.UserName] = sec
+		secrets[sr.UserDetails.UserName] = sec
 
 		jwt, err := getJWT(sr, sec)
 

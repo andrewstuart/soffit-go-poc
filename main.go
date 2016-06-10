@@ -3,13 +3,11 @@ package main
 import (
 	"encoding/json"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
-	"github.com/ghodss/yaml"
 )
 
 var conf map[string]string
@@ -87,14 +85,18 @@ func main() {
 }
 
 func init() {
-	bs, err := ioutil.ReadFile(os.Getenv("CONF_FILE"))
-	if err != nil {
-		log.Fatal("Could not read CONF_FILE", err)
-	}
-	err = yaml.Unmarshal(bs, &conf)
-	if err != nil {
-		log.Fatal("Could not unmarshal yaml config", err)
-	}
+	// bs, err := ioutil.ReadFile(os.Getenv("CONF_FILE"))
+	// if err != nil {
+	// 	log.Fatal("Could not read CONF_FILE", err)
+	// }
+	// err = yaml.Unmarshal(bs, &conf)
+	// if err != nil {
+	// 	log.Fatal("Could not unmarshal yaml config", err)
+	// }
+	//
+	// conf["endpoint"] = os.Getenv("ENDPOINT")
 
-	conf["endpoint"] = os.Getenv("ENDPOINT")
+	conf = map[string]string{
+		"endpoint": os.Getenv("ENDPOINT"),
+	}
 }

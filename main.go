@@ -45,7 +45,7 @@ const pageTpl = `
 				method: 'GET',
 				url: '{{ .conf.endpoint }}/data',
 				headers: {
-					Authorization: "JWT " + jwt}
+					Authorization: "Bearer " + jwt}
 				})
 				.then(function(d) {
 					ele.find('#remote-data').append('<pre>' + d + '</pre>');
@@ -116,9 +116,9 @@ func main() {
 
 		au := strings.Split(r.Header.Get("Authorization"), " ")
 
-		if len(au) < 2 || au[0] != "JWT" {
-			log.Println("Only JWT Authorization is acceptable")
-			http.Error(w, "Only JWT Authorization is acceptable", 401)
+		if len(au) < 2 || au[0] != "Bearer" {
+			log.Println("Only Bearer Authorization is acceptable")
+			http.Error(w, "Only Bearer Authorization is acceptable", 401)
 			return
 		}
 

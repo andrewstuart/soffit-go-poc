@@ -3,10 +3,11 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
-	"fmt"
+	"encoding/pem"
 	"log"
+	"os"
 
 	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
 	"github.com/dgrijalva/jwt-go"
@@ -19,11 +20,12 @@ const (
 	kid = "soffit-signer"
 )
 
-var signingKey *rsa.PrivateKey
+var (
+	signingKey *rsa.PrivateKey
+	tlsCert    *tls.Certificate
+)
 
 func init() {
-	//signingKey = []byte("foobarbaz")
-
 	k, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		log.Fatal(err)
@@ -34,10 +36,20 @@ func init() {
 		log.Fatal(err)
 	}
 
+	cert, err := getSignedCert(k)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tlsCert = cert
+
+	p := &pem.Block{
+		Bytes: bs,
+		Type:  "PUBLIC KEY",
+	}
+
 	log.Println("Public Key:")
-	fmt.Println("-----BEGIN PUBLIC KEY-----  ")
-	fmt.Println(base64.StdEncoding.EncodeToString(bs))
-	fmt.Println("-----END PUBLIC KEY-----  ")
+	pem.Encode(os.Stdout, p)
 
 	signingKey = k
 }

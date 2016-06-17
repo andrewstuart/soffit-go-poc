@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
@@ -57,6 +58,13 @@ const pageTpl = `
 
 func main() {
 	t := template.Must(template.New("soffit").Parse(pageTpl))
+
+	tl, err := tls.Listen("tcp", ":8443", &tls.Config{
+		Certificates: []tls.Certificate{*tlsCert},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	r := http.NewServeMux()
 
@@ -138,6 +146,13 @@ func main() {
 			"storedSecret": secrets[reqJWT.Claims["sub"].(string)],
 		})
 	})
+
+	go func() {
+		err := http.Serve(tl, r)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	log.Fatal(http.ListenAndServe(":8089", r))
 }

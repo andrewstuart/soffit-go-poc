@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: soffit-go
-        image: docker.astuart.co:5000/soffit/soffit-go
+        image: docker.astuart.co:5000/soffit-go:1466138781
         resources:
           requests:
             cpu: 100m
@@ -27,10 +27,15 @@ spec:
           value: /soffit/conf/soffit.yaml
         - name: ENDPOINT
           value: https://soffit-go.test.astuart.co
+        - name: SERVICE_NAME
+          value: soffit-go.uportal.svc.cluster.local
         ports:
         - containerPort: 8089
           protocol: TCP
           name: web
+        - containerPort: 8443
+          protocol: TCP
+          name: https
       volumes:
       - name: conf
         secret:
@@ -45,6 +50,10 @@ spec:
   ports:
   - port: 80
     targetPort: 8089
+    name: http
+  - port: 443
+    targetPort: 8443
+    name: https
   selector:
     app: uportal-go
     type: soffit

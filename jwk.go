@@ -54,7 +54,7 @@ func init() {
 	signingKey = k
 }
 
-func getJWT(req soffit.Request, secret string) (string, error) {
+func getJWT(req soffit.Payload, secret string) (string, error) {
 	t := jwt.New(jwt.SigningMethodRS256)
 
 	t.Header["kid"] = kid
@@ -62,7 +62,7 @@ func getJWT(req soffit.Request, secret string) (string, error) {
 	t.Claims = map[string]interface{}{
 		"iss": jIss,
 		"aud": jAud,
-		"sub": req.UserDetails.Username,
+		"sub": req.Request.User.Username,
 		"org.apereo.portal.soffitRequest": req,
 		"secret": secret,
 	}

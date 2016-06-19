@@ -75,7 +75,7 @@ func main() {
 
 		log.Println("Handling request")
 
-		var sr soffit.Request
+		var sr soffit.Payload
 
 		err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&sr)
 		if err != nil {
@@ -87,7 +87,7 @@ func main() {
 		bs, _ := json.MarshalIndent(sr, "", "  ")
 
 		sec := newSecret()
-		secrets[sr.UserDetails.Username] = sec
+		secrets[sr.Request.User.Username] = sec
 
 		jwt, err := getJWT(sr, sec)
 

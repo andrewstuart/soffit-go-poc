@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: soffit-go
-        image: docker.astuart.co:5000/soffit-go:1466138781
+        image: docker.astuart.co:5000/soffit-go:1466140077
         resources:
           requests:
             cpu: 100m
@@ -29,6 +29,11 @@ spec:
           value: https://soffit-go.test.astuart.co
         - name: SERVICE_NAME
           value: soffit-go.uportal.svc.cluster.local
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-token
+              key: token
         ports:
         - containerPort: 8089
           protocol: TCP

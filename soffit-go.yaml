@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: soffit-go
-        image: docker.astuart.co:5000/soffit-go:1466140077
+        image: docker.astuart.co:5000/soffit-go:1466363499
         resources:
           requests:
             cpu: 100m

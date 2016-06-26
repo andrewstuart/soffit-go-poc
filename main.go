@@ -12,15 +12,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
 	"github.com/dgrijalva/jwt-go"
 )
 
 var conf map[string]string
 
+//<h1>Your portal is running {{ .sr.Request.Portal.Provider }} major version {{ .sr.Request.Portal.Version.Major }}.</h1>
 const pageTpl = `
-<div id="{{ .sr.Namespace }}-response">
-	<h1>Your portal is running {{ .sr.Portal.Provider }} major version {{ .sr.Portal.Version.Major }}.</h1>
+<div id="{{ .sr.Request.Namespace }}-response">
+	<h2>Hello there {{ .sr.User.Username }}. Welcome to Soffit.</h2>
 	<h2>Full Details:</h2>
 	<pre>{{ .srJson }}</pre>
 
@@ -33,7 +33,7 @@ const pageTpl = `
 	<script type="text/javascript">
 		(function() {
 			var i = 0;
-			var ele = $('#{{ .sr.Namespace }}-response');
+			var ele = $('#{{ .sr.Request.Namespace }}-response');
 			function incr() {
 				 ele.find('#ticktock').html('' + i++);
 			}
@@ -75,7 +75,7 @@ func main() {
 
 		log.Println("Handling request")
 
-		var sr soffit.Payload
+		var sr Payload
 
 		err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&sr)
 		if err != nil {
@@ -87,7 +87,7 @@ func main() {
 		bs, _ := json.MarshalIndent(sr, "", "  ")
 
 		sec := newSecret()
-		secrets[sr.Request.User.Username] = sec
+		secrets[sr.User.Username] = sec
 
 		jwt, err := getJWT(sr, sec)
 

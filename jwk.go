@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/andrewstuart/soffit-go-poc/pkg/soffit"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -54,7 +53,7 @@ func init() {
 	signingKey = k
 }
 
-func getJWT(req soffit.Payload, secret string) (string, error) {
+func getJWT(req Payload, secret string) (string, error) {
 	t := jwt.New(jwt.SigningMethodRS256)
 
 	t.Header["kid"] = kid
@@ -62,7 +61,7 @@ func getJWT(req soffit.Payload, secret string) (string, error) {
 	t.Claims = map[string]interface{}{
 		"iss": jIss,
 		"aud": jAud,
-		"sub": req.Request.User.Username,
+		"sub": req.User.Username,
 		"org.apereo.portal.soffitRequest": req,
 		"secret": secret,
 	}

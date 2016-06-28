@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/rand"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
@@ -12,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/andrewstuart/vtls"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -58,13 +58,6 @@ const pageTpl = `
 
 func main() {
 	t := template.Must(template.New("soffit").Parse(pageTpl))
-
-	tl, err := tls.Listen("tcp", ":8443", &tls.Config{
-		Certificates: []tls.Certificate{*tlsCert},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	r := http.NewServeMux()
 
@@ -147,8 +140,14 @@ func main() {
 		})
 	})
 
+	cli := &vtls.Client{
+		Addr:  "vault.astuart.co",
+		Mount: "pki",
+		Role:  "astuart",
+	}
+
 	go func() {
-		err := http.Serve(tl, r)
+		err := vtls.ListenAndServeTLS(":8443", r, cli)
 		if err != nil {
 			log.Fatal(err)
 		}

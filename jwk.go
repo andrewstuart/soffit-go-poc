@@ -19,28 +19,26 @@ const (
 	kid = "soffit-signer"
 )
 
+const (
+	KeySize = 1 << 12
+)
+
 var (
 	signingKey *rsa.PrivateKey
 	tlsCert    *tls.Certificate
 )
 
 func init() {
-	k, err := rsa.GenerateKey(rand.Reader, 2048)
+	k, err := rsa.GenerateKey(rand.Reader, KeySize)
 	if err != nil {
 		log.Fatal(err)
 	}
+	signingKey = k
 
 	bs, err := x509.MarshalPKIXPublicKey(&k.PublicKey)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	cert, err := getSignedCert(k)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tlsCert = cert
 
 	p := &pem.Block{
 		Bytes: bs,
@@ -49,8 +47,6 @@ func init() {
 
 	log.Println("Public Key:")
 	pem.Encode(os.Stdout, p)
-
-	signingKey = k
 }
 
 func getJWT(req Payload, secret string) (string, error) {

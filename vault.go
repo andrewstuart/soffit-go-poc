@@ -1,17 +1,6 @@
 package main
 
-import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
-	"net/http"
-	"os"
-
-	vault "github.com/hashicorp/vault/api"
-)
+import "os"
 
 const stuartCa = `-----BEGIN CERTIFICATE-----
 MIIDLzCCAhegAwIBAgIJALsD4dhjW9hAMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNV
@@ -39,65 +28,3 @@ var (
 	token = os.Getenv("VAULT_TOKEN")
 	cname = os.Getenv("SERVICE_NAME")
 )
-
-func getSignedCert(k *rsa.PrivateKey) (*tls.Certificate, error) {
-	if cname == "" {
-		cname = "test.svc.cluster.local"
-	}
-
-	cp := x509.NewCertPool()
-	cp.AppendCertsFromPEM([]byte(stuartCa))
-	cli := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{RootCAs: cp},
-		},
-	}
-
-	cfg := vault.Config{
-		Address:    "https://vault.astuart.co:8200",
-		HttpClient: cli,
-	}
-
-	vCli, err := vault.NewClient(&cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	vCli.SetToken(token)
-
-	tpl := &x509.CertificateRequest{
-		Subject:        pkix.Name{CommonName: cname},
-		EmailAddresses: []string{"andrew.stuart2@gmail.com"},
-	}
-
-	csrBs, err := x509.CreateCertificateRequest(rand.Reader, tpl, k)
-	if err != nil {
-		return nil, err
-	}
-
-	pemB := &pem.Block{
-		Type:  "CERTIFICATE REQUEST",
-		Bytes: csrBs,
-	}
-
-	data := map[string]interface{}{
-		"csr":         string(pem.EncodeToMemory(pemB)),
-		"common_name": tpl.Subject.CommonName,
-		"format":      "pem_bundle",
-	}
-
-	secret, err := vCli.Logical().Write("pki/sign/kube", data)
-	if err != nil {
-		return nil, err
-	}
-
-	pubBs := []byte(secret.Data["certificate"].(string))
-
-	pb := &pem.Block{
-		Bytes: x509.MarshalPKCS1PrivateKey(k),
-		Type:  "RSA PRIVATE KEY",
-	}
-
-	crt, err := tls.X509KeyPair(pubBs, pem.EncodeToMemory(pb))
-	return &crt, err
-}

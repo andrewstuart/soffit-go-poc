@@ -11,8 +11,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/andrewstuart/vtls"
+	"astuart.co/vpki"
+
 	"github.com/dgrijalva/jwt-go"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var conf map[string]string
@@ -140,14 +142,18 @@ func main() {
 		})
 	})
 
-	cli := &vtls.Client{
+	r.Handle("/metrics", prometheus.Handler())
+
+	cli := &vpki.Client{
 		Addr:  "vault.astuart.co",
 		Mount: "pki",
-		Role:  "astuart",
+		Role:  "kube",
 	}
 
+	cli.SetToken(os.Getenv("VAULT_TOKEN"))
+
 	go func() {
-		err := vtls.ListenAndServeTLS(":8443", r, cli)
+		err := vpki.ListenAndServeTLS(":8443", prometheus.InstrumentHandler("soffit", r), cli)
 		if err != nil {
 			log.Fatal(err)
 		}

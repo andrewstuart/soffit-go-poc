@@ -7,6 +7,9 @@ spec:
   replicas: 1
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8089"
       labels:
         app: uportal-go
         type: soffit
@@ -14,7 +17,7 @@ spec:
     spec:
       containers:
       - name: soffit-go
-        image: docker.astuart.co:5000/soffit-go:1466363499
+        image: docker.astuart.co:5000/soffit-go:1468020164
         resources:
           requests:
             cpu: 100m

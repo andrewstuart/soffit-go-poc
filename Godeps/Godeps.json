@@ -4,6 +4,10 @@
 	"GodepVersion": "v74",
 	"Deps": [
 		{
+			"ImportPath": "github.com/andrewstuart/vtls",
+			"Rev": "910391ff2a26b2d26295310d6d6fda066807e51f"
+		},
+		{
 			"ImportPath": "github.com/blang/semver",
 			"Comment": "v3.0.1",
 			"Rev": "31b736133b98f26d5e078ec9eb591666edfd091f"
@@ -28,6 +32,10 @@
 		{
 			"ImportPath": "github.com/hashicorp/go-multierror",
 			"Rev": "d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-rootcerts",
+			"Rev": "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",
@@ -69,6 +77,10 @@
 			"ImportPath": "github.com/hashicorp/vault/api",
 			"Comment": "v0.5.1-187-g1b89fed",
 			"Rev": "1b89fedc0bcd76e5f2e2f1017ee219cce7dddc4d"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/go-homedir",
+			"Rev": "981ab348d865cf048eb7d17e78ac7192632d8415"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",

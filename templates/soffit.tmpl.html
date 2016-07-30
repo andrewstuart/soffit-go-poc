@@ -1,0 +1,36 @@
+<div id="{{ .rs }}">
+	<h2>Hello there {{ .sr.User.Username }}. Welcome to Soffit.</h2>
+	<h2>Full Details:</h2>
+	<pre>{{ .srJson }}</pre>
+
+	<h2>JavaScript example</h2>
+	<div id="ticktock"></div>
+
+	<h2>Remote Data Example</h2>
+	<div id="remote-data"></div>
+
+	<script type="text/javascript">
+		(function($) {
+			var i = 0;
+			var ele = $('#{{ .rs }}');
+			function incr() {
+				 ele.find('#ticktock').html('' + i++);
+			}
+
+			setInterval(incr, 1000);
+
+			var jwt = "{{ .jwt }}"
+
+			console.log('here');
+			$.ajax({
+				method: 'GET',
+				url: '{{ .conf.endpoint }}/data',
+				headers: {
+					Authorization: "Bearer " + jwt}
+				})
+				.then(function(d) {
+					ele.find('#remote-data').append('<pre>' + d + '</pre>');
+				});
+		})(up.jQuery);
+	</script>
+</div>

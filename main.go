@@ -19,47 +19,23 @@ import (
 
 var conf map[string]string
 
-//<h1>Your portal is running {{ .sr.Request.Portal.Provider }} major version {{ .sr.Request.Portal.Version.Major }}.</h1>
-const pageTpl = `
-<div id="{{ .sr.Request.Namespace }}-response">
-	<h2>Hello there {{ .sr.User.Username }}. Welcome to Soffit.</h2>
-	<h2>Full Details:</h2>
-	<pre>{{ .srJson }}</pre>
+func randString() (string, error) {
+	bs := make([]byte, 20)
+	_, err := rand.Read(bs)
+	if err != nil {
+		return "", err
+	}
+	str := base64.StdEncoding.EncodeToString(bs)
 
-	<h2>JavaScript example</h2>
-	<div id="ticktock"></div>
+	str = strings.Replace(str, "=", "", -1)
+	str = strings.Replace(str, "/", "", -1)
+	str = strings.Replace(str, "\\", "", -1)
 
-	<h2>Remote Data Example</h2>
-	<div id="remote-data"></div>
-
-	<script type="text/javascript">
-		(function() {
-			var i = 0;
-			var ele = $('#{{ .sr.Request.Namespace }}-response');
-			function incr() {
-				 ele.find('#ticktock').html('' + i++);
-			}
-
-			setInterval(incr, 1000);
-
-			var jwt = "{{ .jwt }}"
-
-			$.ajax({
-				method: 'GET',
-				url: '{{ .conf.endpoint }}/data',
-				headers: {
-					Authorization: "Bearer " + jwt}
-				})
-				.then(function(d) {
-					ele.find('#remote-data').append('<pre>' + d + '</pre>');
-				});
-		})(up.jQuery);
-	</script>
-</div>
-`
+	return str, nil
+}
 
 func main() {
-	t := template.Must(template.New("soffit").Parse(pageTpl))
+	t := template.Must(template.ParseGlob("templates/**"))
 
 	r := http.NewServeMux()
 
@@ -92,12 +68,18 @@ func main() {
 			return
 		}
 
-		err = t.Execute(w, map[string]interface{}{
+		rs, err := randString()
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = t.Lookup("soffit.tmpl.html").Execute(w, map[string]interface{}{
 			"srJson": string(bs),
 			"sr":     sr,
 			"conf":   conf,
 			"jwt":    jwt,
 			"secret": sec,
+			"rs":     rs,
 		})
 
 		if err != nil {

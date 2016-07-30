@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"astuart.co/soffit-go"
 	"astuart.co/vpki"
 
 	"github.com/dgrijalva/jwt-go"
@@ -55,7 +56,7 @@ func main() {
 
 		log.Println("Handling request")
 
-		var sr Payload
+		var sr soffit.Payload
 
 		err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&sr)
 		if err != nil {

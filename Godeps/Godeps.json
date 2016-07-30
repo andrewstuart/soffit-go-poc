@@ -4,6 +4,10 @@
 	"GodepVersion": "v74",
 	"Deps": [
 		{
+			"ImportPath": "astuart.co/soffit-go",
+			"Rev": "26507d83387185c125c762c4d63b8d3a7c169885"
+		},
+		{
 			"ImportPath": "astuart.co/vpki",
 			"Comment": "v1.1.0-1-g42dfd48",
 			"Rev": "42dfd4861fa99d7eac9eca8be8e9292ec178dc34"

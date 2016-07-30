@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 
+	soffit "astuart.co/soffit-go"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -49,7 +51,7 @@ func init() {
 	pem.Encode(os.Stdout, p)
 }
 
-func getJWT(req Payload, secret string) (string, error) {
+func getJWT(req soffit.Payload, secret string) (string, error) {
 	t := jwt.New(jwt.SigningMethodRS256)
 
 	t.Header["kid"] = kid

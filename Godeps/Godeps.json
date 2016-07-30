@@ -5,7 +5,7 @@
 	"Deps": [
 		{
 			"ImportPath": "astuart.co/soffit-go",
-			"Rev": "26507d83387185c125c762c4d63b8d3a7c169885"
+			"Rev": "d936c3bebc4409de25edd2567de62a3c43844027"
 		},
 		{
 			"ImportPath": "astuart.co/vpki",

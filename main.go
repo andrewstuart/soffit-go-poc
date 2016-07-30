@@ -1,13 +1,13 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"html/template"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -27,21 +27,6 @@ var (
 
 func init() {
 	flag.Parse()
-}
-
-func randString() (string, error) {
-	bs := make([]byte, 20)
-	_, err := rand.Read(bs)
-	if err != nil {
-		return "", err
-	}
-	str := base64.StdEncoding.EncodeToString(bs)
-
-	str = strings.Replace(str, "=", "", -1)
-	str = strings.Replace(str, "/", "", -1)
-	str = strings.Replace(str, "\\", "", -1)
-
-	return str, nil
 }
 
 func main() {
@@ -78,7 +63,7 @@ func main() {
 			return
 		}
 
-		rs, err := randString()
+		rs, err := soffit.RandHTMLID()
 		if err != nil {
 			log.Println(err)
 		}

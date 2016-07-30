@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: soffit-go
-        image: docker.astuart.co:5000/soffit-go:1469851849
+        image: docker.astuart.co:5000/soffit-go:1469852214
         resources:
           requests:
             cpu: 100m
@@ -25,6 +25,10 @@ spec:
         volumeMounts:
         - name: conf
           mountPath: /soffit/conf
+        command:
+          - "go-wrapper"
+          - "run"
+          - "-use-vault"
         env:
         - name: CONF_FILE
           value: /soffit/conf/soffit.yaml

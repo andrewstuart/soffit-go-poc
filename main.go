@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"html/template"
 	"io"
 	"log"
@@ -17,7 +18,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var conf map[string]string
+var (
+	conf map[string]string
+
+	useVault = flag.Bool("use-vault", false, "use vault to obtain a certificate")
+)
+
+func init() {
+	flag.Parse()
+}
 
 func randString() (string, error) {
 	bs := make([]byte, 20)
@@ -126,20 +135,22 @@ func main() {
 
 	r.Handle("/metrics", prometheus.Handler())
 
-	cli := &vpki.Client{
-		Addr:  "vault.astuart.co",
-		Mount: "pki",
-		Role:  "kube",
-	}
-
-	cli.SetToken(os.Getenv("VAULT_TOKEN"))
-
-	go func() {
-		err := vpki.ListenAndServeTLS(":8443", prometheus.InstrumentHandler("soffit", r), cli)
-		if err != nil {
-			log.Fatal(err)
+	if *useVault {
+		cli := &vpki.Client{
+			Addr:  "vault.astuart.co",
+			Mount: "pki",
+			Role:  "kube",
 		}
-	}()
+
+		cli.SetToken(os.Getenv("VAULT_TOKEN"))
+
+		go func() {
+			err := vpki.ListenAndServeTLS(":8443", prometheus.InstrumentHandler("soffit", r), cli)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
+	}
 
 	log.Fatal(http.ListenAndServe(":8089", r))
 }

@@ -11,10 +11,11 @@ import (
 	"os"
 	"strings"
 
+	soffit "astuart.co/soffit-go"
 	"astuart.co/vpki"
 
 	"github.com/Masterminds/sprig"
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -33,57 +34,22 @@ func init() {
 	flag.Parse()
 }
 
-type SoffitOpts struct {
-	Preferences, Definition, Request map[string]interface{}
-}
-
 func main() {
 	t := template.Must(template.New("base").Funcs(sprig.FuncMap()).ParseGlob("templates/**.html"))
 
 	r := http.NewServeMux()
 
-	secrets := map[string]string{}
+	dec := soffit.Decryptor{Password: "CHANGEME"}
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		s := SoffitOpts{}
-
-		for k := range r.Header {
-			if strings.Index(k, "X-Soffit") != 0 {
-				continue
-			}
-			bs, err := base64.StdEncoding.DecodeString(r.Header.Get(k))
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			dec, err := decrypt(bs, "CHANGEME")
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			token, err := jwt.Parse(string(dec), nil)
-
-			if err != nil && !strings.Contains(err.Error(), "Keyfunc") {
-				log.Println("Error parsing jwt", err)
-				http.Error(w, "Invalid JWT", 403)
-				return
-			}
-
-			switch k {
-			case "X-Soffit-Portalrequest":
-				s.Request = token.Claims
-			case "X-Soffit-Definition":
-				s.Definition = token.Claims
-			case "X-Soffit-Preferences":
-				s.Preferences = token.Claims
-			}
-
+		s, err := dec.GetHeaders(r.Header)
+		if err != nil {
+			http.Error(w, "Soffit could not render.", 500)
 		}
 
-		err := t.Lookup("soffit.tmpl.html").Execute(w, s)
+		err = t.Lookup("soffit.tmpl.html").Execute(w, s)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error parsing template", 500)
@@ -120,10 +86,12 @@ func main() {
 			return
 		}
 
+		c := reqJWT.Claims.(jwt.MapClaims)
+
 		json.NewEncoder(w).Encode(map[string]string{
 			"hello":        "world",
-			"jwtSecret":    reqJWT.Claims["secret"].(string),
-			"storedSecret": secrets[reqJWT.Claims["sub"].(string)],
+			"jwtSecret":    c["secret"].(string),
+			"storedSecret": c["sub"].(string),
 		})
 	})
 

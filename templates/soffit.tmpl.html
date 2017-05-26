@@ -1,23 +1,27 @@
-{{ $rs := index .Request.attributes.namespace 0 }}
+{{ $rs := index .Request.attributes.namespace 0 | replace "." "-" }}
 <div id="{{ $rs }}">
 	<h2>Hello there {{ .Request.sub }}. Welcome to Soffit.</h2>
-	<h2>Full Details:</h2>
-	<pre>{{ . | toPrettyJson }}</pre>
-
 	<h2>JavaScript example</h2>
-	<div id="ticktock"></div>
+	<div id="ticktock">0</div>
 
 	<h2>Remote Data Example</h2>
 	<div id="remote-data"></div>
 
 	<script type="text/javascript">
+    var info = {{ . }};
+
+    console.log(info);
 		(function($) {
 			var i = 0;
 
       setInterval(function() {
-        var tt = $('#' + {{ $rs }} + ' #ticktock');
-        tt.text('' + i++);
+        var ele = $('# ' + {{ $rs }} + ' #ticktock');
+        ele.text(i++);
       }, 1000);
-		})(up.jQuery);
+		})(jQuery);
 	</script>
+
+	<h2>Full Details:</h2>
+	<pre>{{ . | toPrettyJson }}</pre>
+
 </div>

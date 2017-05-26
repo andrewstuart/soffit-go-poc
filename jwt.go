@@ -51,7 +51,7 @@ func getJWT(req soffit.Payload, secret string) (string, error) {
 
 	t.Header["kid"] = kid
 
-	t.Claims = map[string]interface{}{
+	t.Claims = jwt.MapClaims{
 		"iss": jIss,
 		"aud": jAud,
 		"sub": req.User.Username,

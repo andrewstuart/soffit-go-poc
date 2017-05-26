@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"flag"
 	"html/template"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 
-	"astuart.co/soffit-go"
 	"astuart.co/vpki"
 
+	"github.com/Masterminds/sprig"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -25,12 +24,21 @@ var (
 	useVault = flag.Bool("use-vault", false, "use vault to obtain a certificate")
 )
 
+const (
+	saltLen = 8
+	ivLen   = saltLen
+)
+
 func init() {
 	flag.Parse()
 }
 
+type SoffitOpts struct {
+	Preferences, Definition, Request map[string]interface{}
+}
+
 func main() {
-	t := template.Must(template.ParseGlob("templates/**"))
+	t := template.Must(template.New("base").Funcs(sprig.FuncMap()).ParseGlob("templates/**.html"))
 
 	r := http.NewServeMux()
 
@@ -39,46 +47,46 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		log.Println("Handling request")
+		s := SoffitOpts{}
 
-		var sr soffit.Payload
+		for k := range r.Header {
+			if strings.Index(k, "X-Soffit") != 0 {
+				continue
+			}
+			bs, err := base64.StdEncoding.DecodeString(r.Header.Get(k))
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			dec, err := decrypt(bs, "CHANGEME")
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 
-		err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&sr)
-		if err != nil {
-			log.Println("Error decoding JSON", err)
-			http.Error(w, "Error decoding JSON", http.StatusNotAcceptable)
-			return
+			token, err := jwt.Parse(string(dec), nil)
+
+			if err != nil && !strings.Contains(err.Error(), "Keyfunc") {
+				log.Println("Error parsing jwt", err)
+				http.Error(w, "Invalid JWT", 403)
+				return
+			}
+
+			switch k {
+			case "X-Soffit-Portalrequest":
+				s.Request = token.Claims
+			case "X-Soffit-Definition":
+				s.Definition = token.Claims
+			case "X-Soffit-Preferences":
+				s.Preferences = token.Claims
+			}
+
 		}
 
-		bs, _ := json.MarshalIndent(sr, "", "  ")
-
-		sec := newSecret()
-		secrets[sr.User.Username] = sec
-
-		jwt, err := getJWT(sr, sec)
-
-		if err != nil {
-			log.Println("Error signing jwt", err)
-			http.Error(w, "jwt signing error", 500)
-			return
-		}
-
-		rs, err := soffit.RandHTMLID()
+		err := t.Lookup("soffit.tmpl.html").Execute(w, s)
 		if err != nil {
 			log.Println(err)
-		}
-
-		err = t.Lookup("soffit.tmpl.html").Execute(w, map[string]interface{}{
-			"srJson": string(bs),
-			"sr":     sr,
-			"conf":   conf,
-			"jwt":    jwt,
-			"secret": sec,
-			"rs":     rs,
-		})
-
-		if err != nil {
-			log.Printf("Error executing template: %v\n", err)
+			http.Error(w, "Error parsing template", 500)
 		}
 	})
 
@@ -106,7 +114,7 @@ func main() {
 			return &signingKey.PublicKey, nil
 		})
 
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "Keyfunc") {
 			log.Println("Error parsing jwt", err)
 			http.Error(w, "Invalid JWT", 403)
 			return
@@ -137,6 +145,8 @@ func main() {
 			}
 		}()
 	}
+
+	log.Println("listening")
 
 	log.Fatal(http.ListenAndServe(":8089", r))
 }

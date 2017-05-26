@@ -1,7 +1,8 @@
-<div id="{{ .rs }}">
-	<h2>Hello there {{ .sr.User.Username }}. Welcome to Soffit.</h2>
+{{ $rs := index .Request.attributes.namespace 0 }}
+<div id="{{ $rs }}">
+	<h2>Hello there {{ .Request.sub }}. Welcome to Soffit.</h2>
 	<h2>Full Details:</h2>
-	<pre>{{ .srJson }}</pre>
+	<pre>{{ . | toPrettyJson }}</pre>
 
 	<h2>JavaScript example</h2>
 	<div id="ticktock"></div>
@@ -12,25 +13,11 @@
 	<script type="text/javascript">
 		(function($) {
 			var i = 0;
-			var ele = $('#{{ .rs }}');
-			function incr() {
-				 ele.find('#ticktock').html('' + i++);
-			}
 
-			setInterval(incr, 1000);
-
-			var jwt = "{{ .jwt }}"
-
-			console.log('here');
-			$.ajax({
-				method: 'GET',
-				url: '{{ .conf.endpoint }}/data',
-				headers: {
-					Authorization: "Bearer " + jwt}
-				})
-				.then(function(d) {
-					ele.find('#remote-data').append('<pre>' + d + '</pre>');
-				});
+      setInterval(function() {
+        var tt = $('#' + {{ $rs }} + ' #ticktock');
+        tt.text('' + i++);
+      }, 1000);
 		})(up.jQuery);
 	</script>
 </div>

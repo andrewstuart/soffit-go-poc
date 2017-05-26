@@ -1,13 +1,8 @@
 package main
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-	"log"
-	"os"
 
 	soffit "astuart.co/soffit-go"
 
@@ -31,24 +26,24 @@ var (
 )
 
 func init() {
-	k, err := rsa.GenerateKey(rand.Reader, KeySize)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signingKey = k
+	// k, err := rsa.GenerateKey(rand.Reader, KeySize)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// signingKey = k
 
-	bs, err := x509.MarshalPKIXPublicKey(&k.PublicKey)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// bs, err := x509.MarshalPKIXPublicKey(&k.PublicKey)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	p := &pem.Block{
-		Bytes: bs,
-		Type:  "PUBLIC KEY",
-	}
+	// p := &pem.Block{
+	// 	Bytes: bs,
+	// 	Type:  "PUBLIC KEY",
+	// }
 
-	log.Println("Public Key:")
-	pem.Encode(os.Stdout, p)
+	// log.Println("Public Key:")
+	// pem.Encode(os.Stdout, p)
 }
 
 func getJWT(req soffit.Payload, secret string) (string, error) {
